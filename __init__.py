@@ -13,7 +13,7 @@ NOTIFICATION_WIDTH_PERCENTAGE = 1 # Percentage of the screen width
 NOTIFICATION_SPACING = 5 # Spacing between notifications in pixels 
 NOTIFICATION_FIRST_Y_LOCATION = 0 # Y location of the first notification in pixels
 
-NOTIFICATION_X_START_POSITION = 0.7
+NOTIFICATION_X_START_POSITION = 0.5
 
 NOTIFICATION_INFO_COLOR = (0.1, 0.1, 0.1, 0.7)
 NOTIFICATION_WARNING_COLOR = (1.0, 0.5, 0.0, 0.3)
