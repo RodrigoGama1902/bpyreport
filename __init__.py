@@ -2,17 +2,12 @@ import bpy
 
 __all__ = [
     "NotificationType",
-    "report_message",
-    "add_fix_message",
-    "unregister_drawn_handler",
+    "message",
+    "fix_message",
+    "unregister",
     ]
 
-from .draw import (
-    NotificationType,
-    report_message,
-    add_fix_message,
-    unregister_drawn_handler,
-    )
+from . import message_manager as msg
 
 # ------------------------------------------------------------------------
 #   One-file add-on to test the Better Report Message API
@@ -82,25 +77,25 @@ class BRM_OT_TestOperator(bpy.types.Operator):
     def execute(self, context):
 
         props = context.scene.brm_test
-        message_type = NotificationType.INFO
+        message_type = msg.NotificationType.INFO
 
         match props.message_type:
             case 'INFO':
-                message_type = NotificationType.INFO
+                message_type = msg.NotificationType.INFO
             case 'WARNING':
-                message_type = NotificationType.WARNING
+                message_type = msg.NotificationType.WARNING
             case 'ERROR':
-                message_type = NotificationType.ERROR
+                message_type = msg.NotificationType.ERROR
             case 'RUNTIME_ERROR':
-                message_type = NotificationType.RUNTIME_ERROR
+                message_type = msg.NotificationType.RUNTIME_ERROR
 
         # Message system call
         if self.action == 'REPORT':
-            report_message(props.message_text, type = message_type)
+            msg.message(props.message_text, type = message_type)
         if self.action == 'FIX_MESSAGE':
-            add_fix_message(props.message_text, type = message_type, index = 0)
+            msg.fix_message(props.message_text, type = message_type, index = 0)
         if self.action == 'UNREGISTER':
-            unregister_drawn_handler()
+            msg.unregister()
 
         return {'FINISHED'}
 
@@ -119,7 +114,7 @@ def unregister():
     bpy.utils.unregister_class(BRM_OT_TestOperator)
 
     # Unregister the message system
-    unregister_drawn_handler()
+    msg.unregister()
 
 if __name__ == "__main__":
     register()

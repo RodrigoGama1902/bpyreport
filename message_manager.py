@@ -1,38 +1,16 @@
-import json
-
-from enum import Enum
-from pathlib import Path
-
+import bpy
 import bpy  
 import blf
 import gpu
 import bgl
 from gpu_extras.batch import batch_for_shader
 
+from enum import Enum
+from pathlib import Path
 
-notification_data = {
-    "handler": None,
-    "notifications": [],
-    "fix_messages": {},
-}
+from .settings import Settings
 
-class Settings:
-    '''Load the settings from the json file'''
-
-    def __init__(self, json_path):
-        self.json_path = json_path
-        self.data = json.load(open(json_path, "r"))
-
-    def basic(self, key):
-        return self.data["basic"][key]
-    
-    def notification_draw(self, key):
-        return self.data["notification_draw"][key]
-    
-    def colors(self, key):
-        return self.data["colors"][key]
-
-SETTINGS = Settings(Path(__file__).parent / "settings.json")
+SETTINGS = Settings(Path(__file__).parent / "settings.json") # Customizable settings path
 
 class DrawHelper():
     '''Helper class to redraw the viewport'''
@@ -179,7 +157,14 @@ class NotificationDraw():
         blf.disable(self.font_id, blf.SHADOW)
 
 
-def draw_all_notifications(self, context):
+notification_data = {
+    "handler": None,
+    "notifications": [],
+    "fix_messages": {},
+}
+
+
+def _draw_all_notifications(self, context):
     """Draws all current notifications on the viewports"""
     
     y_current_location = SETTINGS.notification_draw("notification_first_y_location")
@@ -211,28 +196,28 @@ def draw_all_notifications(self, context):
         fix_message_draw.draw_notification_text()
 
 
-def timer_remove_text():
+def _timer_remove_text():
     '''Remove the first notification from the list'''
     
     notification_data["notifications"] = notification_data["notifications"][1:]
     DrawHelper.redraw()
 
 
-def create_drawn_handler():
+def _create_drawn_handler():
     
     handler = notification_data["handler"]
     
     if not handler:
         notification_data["handler"] = bpy.types.SpaceView3D.draw_handler_add(
-        draw_all_notifications, (None, None), 'WINDOW', 'POST_PIXEL')
+        _draw_all_notifications, (None, None), 'WINDOW', 'POST_PIXEL')
 
 
-def add_fix_message(text : str, type : NotificationType = NotificationType.INFO, index = 0):
+def fix_message(text : str, type : NotificationType = NotificationType.INFO, index = 0):
     
     if not isinstance(text, str):
         raise TypeError("Better Report Message: The text must be a string")
     
-    create_drawn_handler()
+    _create_drawn_handler()
     
     notification = NotificationInfo(text, type)
     notification_data["fix_messages"][index] = notification
@@ -241,20 +226,22 @@ def add_fix_message(text : str, type : NotificationType = NotificationType.INFO,
 
 def remove_fix_message(index = 0):
 
-    create_drawn_handler()
+    _create_drawn_handler()
         
     if index in notification_data["fix_messages"]:
         del notification_data["fix_messages"][index]
         DrawHelper.redraw()
 
+
 def clear_fix_messages():
 
-    create_drawn_handler()
+    _create_drawn_handler()
         
     notification_data["fix_messages"] = {}
     DrawHelper.redraw()
 
-def unregister_drawn_handler():
+
+def unregister():
 
     handler = notification_data["handler"]
     
@@ -265,27 +252,24 @@ def unregister_drawn_handler():
         notification_data["fix_messages"] = {}
         DrawHelper.redraw()
 
-def report_message(text : str,
+
+def message(text : str,
                    type : NotificationType = NotificationType.INFO,
                    display_time = 5,
-                   print_console = True):
+                   print_console = True
+                   ):
     '''Add a notification to the list'''
     
     if not isinstance(text, str):
         raise TypeError("Better Report Message: The text must be a string")
     
-    create_drawn_handler()
+    _create_drawn_handler()
     
     notification = NotificationInfo(text, type)
     notification_data["notifications"].append(notification)
     
-    bpy.app.timers.register(timer_remove_text, first_interval= display_time, persistent=True)
+    bpy.app.timers.register(_timer_remove_text, first_interval= display_time, persistent=True)
     DrawHelper.redraw()
     
     if print_console:
         print(text)
-       
-    
-
-
-
