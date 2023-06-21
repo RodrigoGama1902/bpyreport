@@ -4,7 +4,7 @@ __all__ = [
     "NotificationType",
     "message",
     "fix_message",
-    "unregister",
+    "unregister_messages",
     ]
 
 from . import message_manager as msg
@@ -114,7 +114,7 @@ def unregister():
     bpy.utils.unregister_class(BRM_OT_TestOperator)
 
     # Unregister the message system
-    msg.unregister()
+    msg.unregister_messages()
 
 if __name__ == "__main__":
     register()

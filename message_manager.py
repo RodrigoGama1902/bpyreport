@@ -241,7 +241,7 @@ def clear_fix_messages():
     DrawHelper.redraw()
 
 
-def unregister():
+def unregister_messages():
 
     handler = notification_data["handler"]
     
