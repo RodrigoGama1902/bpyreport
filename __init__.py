@@ -1,13 +1,6 @@
 import bpy
 
-__all__ = [
-    "NotificationType",
-    "message",
-    "fix_message",
-    "unregister_messages",
-    ]
-
-from . import message_manager as msg
+from .src.better_report_message import message_manager as msg
 
 # ------------------------------------------------------------------------
 #   One-file add-on to test the Better Report Message API
