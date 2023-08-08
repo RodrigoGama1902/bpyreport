@@ -224,15 +224,18 @@ def fix_message(text : str, type : NotificationType = NotificationType.INFO, ind
     
     DrawHelper.redraw()
 
-def update_fix_message(new_text : str = "", new_type = None, index = 0):
-
-    if not isinstance(new_text, str):
-        raise TypeError("Better Report Message: The text must be a string")
+def update_fix_message(new_text = None, new_type = None, index = 0):
     
     current_text = notification_data["fix_messages"][index].raw_text
     current_type = notification_data["fix_messages"][index].type
 
+    print("New text", current_text)
+    print("New Type", current_type)
+
     if new_text:
+        if not isinstance(new_text, str):
+            raise TypeError("Better Report Message: The text must be a string")
+
         current_text = new_text
     if new_type:
         current_type = new_type
