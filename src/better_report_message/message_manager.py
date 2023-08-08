@@ -225,6 +225,12 @@ def fix_message(text : str, type : NotificationType = NotificationType.INFO, ind
     DrawHelper.redraw()
 
 def update_fix_message(new_text = None, new_type = None, index = 0):
+
+    if not notification_data["fix_messages"]:
+        return
+    
+    if not len(notification_data["fix_messages"]) > index:
+        raise IndexError("Better Report Message: The index is out of range")
     
     current_text = notification_data["fix_messages"][index].raw_text
     current_type = notification_data["fix_messages"][index].type
