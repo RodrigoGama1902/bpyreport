@@ -19,7 +19,7 @@ class NotificationDrawConfig:
     """Draw configuration for the notification system"""
 
     text_size: int = field(default=40)
-    width_percentage: int = field(default=1)
+    width_percentage: float = field(default=1)
     spacing: int = field(default=5)
     first_y_location: int = field(default=50)
     x_start_position: float = field(default=0.8)
