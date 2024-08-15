@@ -1,7 +1,7 @@
 import bpy
 from bpy.types import Context
 
-from .src.better_report_message import message_manager as msg
+from .src import bpy_report
 
 # ------------------------------------------------------------------------
 #   One-file add-on to test the Better Report Message API
@@ -15,8 +15,8 @@ bl_info = {
     "category": "3D View",
 }
 
-msg.set_notification_config(
-    msg.BasicConfig(
+bpy_report.set_notification_config(
+    bpy_report.BasicConfig(
         use_module_name=True,
         show_notification_type=True,
     )
@@ -39,6 +39,8 @@ class BRM_Properties(bpy.types.PropertyGroup):
         default="This is a test message", name="Message Text"
     )  # type: ignore
 
+    fix_message_index: bpy.props.IntProperty(default=0, name="Fix Message Index")  # type: ignore
+
 
 class BRM_PT_BetterReportMessageTests(bpy.types.Panel):
     """Creates a Panel in the Object properties window"""
@@ -58,6 +60,8 @@ class BRM_PT_BetterReportMessageTests(bpy.types.Panel):
         row.prop(context.scene.brm_test, "message_text")
         row = layout.row()
         row.prop(context.scene.brm_test, "message_type")
+        row = layout.row()
+        row.prop(context.scene.brm_test, "fix_message_index")
 
         box = layout.box()
         box.operator("brm.test_operator", text="Report").action = "REPORT"
@@ -91,29 +95,45 @@ class BRM_OT_TestOperator(bpy.types.Operator):
     def execute(self, context: Context):
 
         props = context.scene.brm_test
-        message_type = msg.NotificationType.INFO
 
-        match props.message_type:
-            case "INFO":
-                message_type = msg.NotificationType.INFO
-            case "WARNING":
-                message_type = msg.NotificationType.WARNING
-            case "ERROR":
-                message_type = msg.NotificationType.ERROR
-            case "RUNTIME_ERROR":
-                message_type = msg.NotificationType.RUNTIME_ERROR
-            case _:
-                message_type = msg.NotificationType.INFO
+        if self.action in ["FIX_MESSAGE", "REPORT"]:
 
-        # Message system call
-        if self.action == "REPORT":
-            msg.message(props.message_text, notification_type=message_type)
-        if self.action == "FIX_MESSAGE":
-            msg.fix_message(
-                props.message_text, notification_type=message_type, index=0
-            )
+            display_time = 0 if self.action == "FIX_MESSAGE" else 5
+
+            match props.message_type:
+                case "INFO":
+                    bpy_report.info(
+                        props.message_text,
+                        display_time=display_time,
+                        fix_message_index=props.fix_message_index,
+                    )
+                case "WARNING":
+                    bpy_report.warning(
+                        props.message_text,
+                        display_time=display_time,
+                        fix_message_index=props.fix_message_index,
+                    )
+                case "ERROR":
+                    bpy_report.error(
+                        props.message_text,
+                        display_time=display_time,
+                        fix_message_index=props.fix_message_index,
+                    )
+                case "RUNTIME_ERROR":
+                    bpy_report.runtime_error(
+                        props.message_text,
+                        display_time=display_time,
+                        fix_message_index=props.fix_message_index,
+                    )
+                case _:
+                    bpy_report.info(
+                        props.message_text,
+                        display_time=display_time,
+                        fix_message_index=props.fix_message_index,
+                    )
+
         if self.action == "UNREGISTER":
-            msg.unregister_messages()
+            bpy_report.unregister_messages()
 
         return {"FINISHED"}
 
@@ -138,7 +158,7 @@ def unregister():
     bpy.utils.unregister_class(BRM_OT_TestOperator)
 
     # Unregister the message system
-    msg.unregister_messages()
+    bpy_report.unregister_messages()
 
 
 if __name__ == "__main__":

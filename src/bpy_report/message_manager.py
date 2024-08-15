@@ -267,21 +267,6 @@ def _create_drawn_handler():
         )
 
 
-def fix_message(
-    text: str,
-    notification_type: NotificationType = NotificationType.INFO,
-    index: int = 0,
-):
-    """Add a fix message to the list"""
-
-    _create_drawn_handler()
-
-    notification = NotificationInfo(text, notification_type)
-    notification_data.fix_messages[index] = notification
-
-    DrawHelper.redraw()
-
-
 def update_fix_message(
     new_text: str | None = None,
     new_type: NotificationType | None = None,
@@ -348,17 +333,20 @@ def message(
     notification_type: NotificationType = NotificationType.INFO,
     display_time: int = 5,
     print_console: bool = True,
+    fix_message_index: int = 0,
 ):
-    """Add a notification to the list"""
-
-    if not isinstance(text, str):  # type: ignore
-        raise TypeError("Better Report Message: The text must be a string")
+    """Add a message notification to the list"""
 
     _create_drawn_handler()
 
     notification = NotificationInfo(text, notification_type)
-    notification_data.notifications.append(notification)
 
+    if display_time <= 0:  # FIX MESSAGE
+        notification_data.fix_messages[fix_message_index] = notification
+        DrawHelper.redraw()
+        return
+
+    notification_data.notifications.append(notification)
     print(notification_config.basic.module_name)
 
     bpy.app.timers.register(
@@ -368,6 +356,74 @@ def message(
 
     if print_console:
         print(text)
+
+
+def info(
+    text: str,
+    display_time: int = 5,
+    print_console: bool = True,
+    fix_message_index: int = 0,
+):
+    """Info wrapper for the message function"""
+
+    message(
+        text=text,
+        notification_type=NotificationType.INFO,
+        display_time=display_time,
+        print_console=print_console,
+        fix_message_index=fix_message_index,
+    )
+
+
+def warning(
+    text: str,
+    display_time: int = 5,
+    print_console: bool = True,
+    fix_message_index: int = 0,
+):
+    """Warning wrapper for the message function"""
+
+    message(
+        text=text,
+        notification_type=NotificationType.WARNING,
+        display_time=display_time,
+        print_console=print_console,
+        fix_message_index=fix_message_index,
+    )
+
+
+def error(
+    text: str,
+    display_time: int = 5,
+    print_console: bool = True,
+    fix_message_index: int = 0,
+):
+    """Error wrapper for the message function"""
+
+    message(
+        text=text,
+        notification_type=NotificationType.ERROR,
+        display_time=display_time,
+        print_console=print_console,
+        fix_message_index=fix_message_index,
+    )
+
+
+def runtime_error(
+    text: str,
+    display_time: int = 5,
+    print_console: bool = True,
+    fix_message_index: int = 0,
+):
+    """Runtime Error wrapper for the message function"""
+
+    message(
+        text=text,
+        notification_type=NotificationType.RUNTIME_ERROR,
+        display_time=display_time,
+        print_console=print_console,
+        fix_message_index=fix_message_index,
+    )
 
 
 def set_notification_config(
