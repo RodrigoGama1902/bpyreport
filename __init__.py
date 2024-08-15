@@ -8,7 +8,7 @@ from .src import bpy_report
 # ------------------------------------------------------------------------
 
 bl_info = {
-    "name": "Better Report Message",
+    "name": "Bpy Report",
     "author": "Rodrigo Gama",
     "version": (0, 0, 1),
     "blender": (4, 1, 0),
@@ -24,6 +24,8 @@ bpy_report.set_notification_config(
 
 
 class BRM_Properties(bpy.types.PropertyGroup):
+    """Properties for the add-on"""
+
     message_type: bpy.props.EnumProperty(
         name="Message Type",
         description="Choose a message type",
@@ -42,11 +44,11 @@ class BRM_Properties(bpy.types.PropertyGroup):
     fix_message_index: bpy.props.IntProperty(default=0, name="Fix Message Index")  # type: ignore
 
 
-class BRM_PT_BetterReportMessageTests(bpy.types.Panel):
+class BRM_PT_BPYReportMessageTests(bpy.types.Panel):
     """Creates a Panel in the Object properties window"""
 
-    bl_label = "Better Report Message Tests"
-    bl_idname = "BRM_PT_BetterReportMessageTests"
+    bl_label = "Bpy Report Message Tests"
+    bl_idname = "BRM_PT_BPYReportMessageTests"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
     bl_category = "BRM Test"
@@ -144,7 +146,7 @@ def register():
     bpy.utils.register_class(BRM_Properties)
     bpy.types.Scene.brm_test = bpy.props.PointerProperty(type=BRM_Properties)
 
-    bpy.utils.register_class(BRM_PT_BetterReportMessageTests)
+    bpy.utils.register_class(BRM_PT_BPYReportMessageTests)
     bpy.utils.register_class(BRM_OT_TestOperator)
 
 
@@ -154,7 +156,7 @@ def unregister():
     bpy.utils.unregister_class(BRM_Properties)
     del bpy.types.Scene.brm_test
 
-    bpy.utils.unregister_class(BRM_PT_BetterReportMessageTests)
+    bpy.utils.unregister_class(BRM_PT_BPYReportMessageTests)
     bpy.utils.unregister_class(BRM_OT_TestOperator)
 
     # Unregister the message system
