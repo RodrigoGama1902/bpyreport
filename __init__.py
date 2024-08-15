@@ -11,9 +11,16 @@ bl_info = {
     "name": "Better Report Message",
     "author": "Rodrigo Gama",
     "version": (0, 0, 1),
-    "blender": (3, 5, 0),
+    "blender": (4, 1, 0),
     "category": "3D View",
 }
+
+msg.set_notification_config(
+    msg.BasicConfig(
+        use_module_name=True,
+        show_notification_type=True,
+    )
+)
 
 
 class BRM_Properties(bpy.types.PropertyGroup):
