@@ -30,14 +30,14 @@ class NotificationDrawConfig:
             to the current area width. Must be between 0 and 1
         end_x (float): The X end position factor in relation
             to the current area width. Must be between 0 and 1
-        spacing (int): The vertical spacing between each notification
+        spacing (int): The vertical spacing in pixels between each notification
         first_y_location (int): The Y location of the first notification
     """
 
     text_size: int = field(default=40)
 
-    start_x: float = field(default=0.8)
-    end_x: float = field(default=1)
+    start_x: float = field(default=0)
+    end_x: float = field(default=0.5)
 
     spacing: int = field(default=5)
     first_y_location: int = field(default=50)

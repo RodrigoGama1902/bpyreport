@@ -23,12 +23,12 @@ class BRM_ConfigPlayground(bpy.types.PropertyGroup):
     use_module_name: bpy.props.BoolProperty(default=True, name="Use Module Name", update=lambda self, context: self.update_report_settings(context))  # type: ignore
     show_notification_type: bpy.props.BoolProperty(default=True, name="Show Notification Type", update=lambda self, context: self.update_report_settings(context))  # type: ignore
 
-    text_size: bpy.props.IntProperty(default=40, name="Text Size", update=lambda self, context: self.update_report_settings(context))  # type: ignore
+    text_size: bpy.props.IntProperty(default=35, name="Text Size", update=lambda self, context: self.update_report_settings(context))  # type: ignore
 
-    end_x: bpy.props.FloatProperty(default=1, name="End X", update=lambda self, context: self.update_report_settings(context))  # type: ignore
-    start_x: bpy.props.FloatProperty(default=0.8, name="Start X", update=lambda self, context: self.update_report_settings(context))  # type: ignore
+    end_x: bpy.props.FloatProperty(default=0.5, min=0, max=1, name="End X", update=lambda self, context: self.update_report_settings(context))  # type: ignore
+    start_x: bpy.props.FloatProperty(default=0, min=0, max=1, name="Start X", update=lambda self, context: self.update_report_settings(context))  # type: ignore
 
-    spacing: bpy.props.IntProperty(default=5, name="Spacing", update=lambda self, context: self.update_report_settings(context))  # type: ignore
+    spacing: bpy.props.IntProperty(default=5, name="Spacing", subtype="PIXEL", update=lambda self, context: self.update_report_settings(context))  # type: ignore
     first_y_location: bpy.props.IntProperty(default=50, name="First Y Location", update=lambda self, context: self.update_report_settings(context))  # type: ignore
 
     info: bpy.props.FloatVectorProperty(
@@ -153,26 +153,36 @@ class BRM_PT_BPYReportMessageTests(bpy.types.Panel):
 
         props = context.scene.brm_test
 
-        row = layout.row()
+        col = layout.column(align=True)
+        box = col.box()
+        box.label(text="Notification Config", icon="INFO")
+
+        box = col.box()
+        props.config_playground.draw(box)
+
+        col = layout.column(align=True)
+        box = col.box()
+        box.label(text="Generate Message", icon="INFO")
+
+        box = col.box()
+        row = box.row()
         row.prop(props, "message_text")
-        row = layout.row()
+        row = box.row()
         row.prop(props, "message_type")
-        row = layout.row()
+        row = box.row()
         row.prop(props, "fix_message_index")
 
-        box = layout.box()
-        box.operator("brm.test_operator", text="Report").action = "REPORT"
-        box.operator("brm.test_operator", text="Fix Message").action = (
+        col = box.column(align=True)
+        row = col.row(align=True)
+        row.operator("brm.test_operator", text="Report").action = "REPORT"
+        row.operator("brm.test_operator", text="Fix Message").action = (
             "FIX_MESSAGE"
         )
 
-        row = layout.row()
-        row.operator("brm.test_operator", text="Unregister").action = (
+        row = col.row(align=True)
+        row.operator("brm.test_operator", text="Unregister All").action = (
             "UNREGISTER"
         )
-
-        box = layout.box()
-        props.config_playground.draw(box)
 
 
 class BRM_OT_TestOperator(bpy.types.Operator):
@@ -195,6 +205,7 @@ class BRM_OT_TestOperator(bpy.types.Operator):
     def execute(self, context: Context):
 
         props = context.scene.brm_test
+        props.config_playground.update_report_settings(context)
 
         if self.action in ["FIX_MESSAGE", "REPORT"]:
 

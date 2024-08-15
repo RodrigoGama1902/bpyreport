@@ -362,7 +362,6 @@ def message(
         return
 
     notification_data.notifications.append(notification)
-    print(notification_config.basic.module_name)
 
     bpy.app.timers.register(
         _timer_remove_text, first_interval=remove_in_time, persistent=True
