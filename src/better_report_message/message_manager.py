@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 from typing import Any
 
@@ -8,60 +8,12 @@ import gpu
 from bpy.types import Context
 from gpu_extras.batch import batch_for_shader
 
-# -------------------------------------------------
-# Notification Config Dataclasses
-# -------------------------------------------------
-
-
-@dataclass
-class BasicConfig:
-    """Basic configuration for the notification system"""
-
-    module_name: str = field(default="My Module")
-    use_module_name: bool = field(default=False)
-    show_notification_type: bool = field(default=False)
-
-
-@dataclass
-class NotificationDrawConfig:
-    """Draw configuration for the notification system"""
-
-    text_size: int = field(default=40)
-    width_percentage: int = field(default=1)
-    spacing: int = field(default=5)
-    first_y_location: int = field(default=50)
-    x_start_position: float = field(default=0.8)
-
-
-@dataclass
-class NotificationColorConfig:
-    """Color configuration for the notification system"""
-
-    info: tuple[float, float, float, float] = field(
-        default=(0.1, 0.1, 0.1, 0.7)
-    )
-    warning: tuple[float, float, float, float] = field(
-        default=(1.0, 0.5, 0.0, 0.3)
-    )
-    error: tuple[float, float, float, float] = field(
-        default=(1.0, 0.0, 0.0, 0.15)
-    )
-    runtime_error: tuple[float, float, float, float] = field(
-        default=(1.0, 0.0, 0.0, 0.3)
-    )
-
-
-class NotificationConfig:
-
-    basic_config: BasicConfig
-    draw_config: NotificationDrawConfig
-    color_config: NotificationColorConfig
-
-    def __init__(self):
-        self.basic_config = BasicConfig()
-        self.draw_config = NotificationDrawConfig()
-        self.color_config = NotificationColorConfig()
-
+from .config import (
+    BasicConfig,
+    NotificationColorConfig,
+    NotificationConfig,
+    NotificationDrawConfig,
+)
 
 # -------------------------------------------------
 # Notification System
@@ -77,12 +29,14 @@ class SceneNotificationData:
     fix_messages: dict[int, "NotificationInfo"]
 
 
+# Global variable responsible for storing the notification data
 notification_data = SceneNotificationData(
     handler=None,
     notifications=[],
     fix_messages={},
 )
 
+# Global variable responsible for storing the notification configuration
 notification_config = NotificationConfig()
 
 
@@ -110,8 +64,8 @@ class NotificationType(Enum):
 class NotificationInfo:
     """Class to store the notification data"""
 
-    module_name = notification_config.basic_config.module_name
-    text_size = notification_config.draw_config.text_size
+    module_name = notification_config.basic.module_name
+    text_size = notification_config.draw.text_size
 
     def __init__(
         self,
@@ -127,7 +81,7 @@ class NotificationInfo:
 
         final_text = self.raw_text
 
-        if notification_config.basic_config.show_notification_type:
+        if notification_config.basic.show_notification_type:
             if self.type == NotificationType.INFO:
                 final_text = "INFO: " + self.raw_text
             if self.type == NotificationType.WARNING:
@@ -137,10 +91,7 @@ class NotificationInfo:
             if self.type == NotificationType.RUNTIME_ERROR:
                 final_text = "<RUNTIME ERROR>: " + self.raw_text
 
-        if (
-            self.module_name
-            and notification_config.basic_config.use_module_name
-        ):
+        if self.module_name and notification_config.basic.use_module_name:
             final_text = f"({self.module_name}) " + final_text
 
         return final_text
@@ -149,15 +100,15 @@ class NotificationInfo:
         """Return the color of the notification"""
 
         if self.type == NotificationType.INFO:
-            return notification_config.color_config.info
+            return notification_config.color.info
         if self.type == NotificationType.WARNING:
-            return notification_config.color_config.warning
+            return notification_config.color.warning
         if self.type == NotificationType.ERROR:
-            return notification_config.color_config.error
+            return notification_config.color.error
         if self.type == NotificationType.RUNTIME_ERROR:
-            return notification_config.color_config.runtime_error
+            return notification_config.color.runtime_error
 
-        return notification_config.color_config.info
+        return notification_config.color.info
 
 
 class NotificationDraw:
@@ -241,7 +192,7 @@ class NotificationDraw:
 
         gpu.state.blend_set("NONE")
 
-        return self.box_height_px + notification_config.draw_config.spacing
+        return self.box_height_px + notification_config.draw.spacing
 
     def draw_notification_text(self):
         """Draw the notification text"""
@@ -262,14 +213,12 @@ class NotificationDraw:
 def _draw_all_notifications(self: Any, context: Context):
     """Draws all current notifications on the viewports"""
 
-    y_current_location = notification_config.draw_config.first_y_location
+    y_current_location = notification_config.draw.first_y_location
     x_start_position = (
-        bpy.context.area.width
-        * notification_config.draw_config.x_start_position
+        bpy.context.area.width * notification_config.draw.x_start_position
     )
     notification_width = (
-        bpy.context.area.width
-        * notification_config.draw_config.width_percentage
+        bpy.context.area.width * notification_config.draw.width_percentage
     )
 
     for notification in notification_data.notifications:
@@ -410,7 +359,7 @@ def message(
     notification = NotificationInfo(text, notification_type)
     notification_data.notifications.append(notification)
 
-    print(notification_config.basic_config.module_name)
+    print(notification_config.basic.module_name)
 
     bpy.app.timers.register(
         _timer_remove_text, first_interval=display_time, persistent=True
@@ -422,18 +371,12 @@ def message(
 
 
 def set_notification_config(
-    basic_config: BasicConfig | None = None,
-    draw_config: NotificationDrawConfig | None = None,
-    color_config: NotificationColorConfig | None = None,
+    basic: BasicConfig | None = None,
+    draw: NotificationDrawConfig | None = None,
+    color: NotificationColorConfig | None = None,
 ) -> None:
-    """Initialize the message system"""
+    """Update the notification configuration"""
 
-    notification_config.basic_config = (
-        basic_config or notification_config.basic_config
-    )
-    notification_config.draw_config = (
-        draw_config or notification_config.draw_config
-    )
-    notification_config.color_config = (
-        color_config or notification_config.color_config
-    )
+    notification_config.basic = basic or notification_config.basic
+    notification_config.draw = draw or notification_config.draw
+    notification_config.color = color or notification_config.color
