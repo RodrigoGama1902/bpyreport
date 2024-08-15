@@ -15,12 +15,103 @@ bl_info = {
     "category": "3D View",
 }
 
-bpy_report.set_notification_config(
-    bpy_report.BasicConfig(
-        use_module_name=True,
-        show_notification_type=True,
-    )
-)
+
+class BRM_ConfigPlayground(bpy.types.PropertyGroup):
+    """Config Playground"""
+
+    module_name: bpy.props.StringProperty(default="My Module", name="Module Name", update=lambda self, context: self.update_report_settings(context))  # type: ignore
+    use_module_name: bpy.props.BoolProperty(default=True, name="Use Module Name", update=lambda self, context: self.update_report_settings(context))  # type: ignore
+    show_notification_type: bpy.props.BoolProperty(default=True, name="Show Notification Type", update=lambda self, context: self.update_report_settings(context))  # type: ignore
+
+    text_size: bpy.props.IntProperty(default=40, name="Text Size", update=lambda self, context: self.update_report_settings(context))  # type: ignore
+
+    end_x: bpy.props.FloatProperty(default=1, name="End X", update=lambda self, context: self.update_report_settings(context))  # type: ignore
+    start_x: bpy.props.FloatProperty(default=0.8, name="Start X", update=lambda self, context: self.update_report_settings(context))  # type: ignore
+
+    spacing: bpy.props.IntProperty(default=5, name="Spacing", update=lambda self, context: self.update_report_settings(context))  # type: ignore
+    first_y_location: bpy.props.IntProperty(default=50, name="First Y Location", update=lambda self, context: self.update_report_settings(context))  # type: ignore
+
+    info: bpy.props.FloatVectorProperty(
+        default=(0.1, 0.1, 0.1, 0.7),
+        min=0.0,
+        max=1.0,
+        name="Info",
+        subtype="COLOR",
+        size=4,
+        update=lambda self, context: self.update_report_settings(context),  # type: ignore
+    )  # type: ignore
+    warning: bpy.props.FloatVectorProperty(
+        default=(1.0, 0.5, 0.0, 0.3),
+        min=0.0,
+        max=1.0,
+        name="Warning",
+        subtype="COLOR",
+        size=4,
+        update=lambda self, context: self.update_report_settings(context),  # type: ignore
+    )  # type: ignore
+    error: bpy.props.FloatVectorProperty(
+        default=(1.0, 0.0, 0.0, 0.15),
+        min=0.0,
+        max=1.0,
+        name="Error",
+        subtype="COLOR",
+        size=4,
+        update=lambda self, context: self.update_report_settings(context),  # type: ignore
+    )  # type: ignore
+    runtime_error: bpy.props.FloatVectorProperty(
+        default=(1.0, 0.0, 0.0, 0.3),
+        min=0.0,
+        max=1.0,
+        name="Runtime Error",
+        subtype="COLOR",
+        size=4,
+        update=lambda self, context: self.update_report_settings(context),  # type: ignore
+    )  # type: ignore
+
+    def draw(self, layout: bpy.types.UILayout):
+        """Draw the properties in the UI"""
+
+        col = layout.column(align=True)
+        col.prop(self, "module_name")
+        col.prop(self, "use_module_name")
+        col.prop(self, "show_notification_type")
+
+        col = layout.column(align=True)
+        col.prop(self, "text_size")
+        col.prop(self, "start_x")
+        col.prop(self, "end_x")
+        col.prop(self, "spacing")
+        col.prop(self, "first_y_location")
+
+        col = layout.column(align=True)
+        col.prop(self, "info")
+        col.prop(self, "warning")
+        col.prop(self, "error")
+        col.prop(self, "runtime_error")
+
+    def update_report_settings(self, context: Context):
+        """Update the report settings"""
+
+        bpy_report.set_notification_config(
+            bpy_report.BasicConfig(
+                use_module_name=self.use_module_name,
+                show_notification_type=self.show_notification_type,
+                module_name=self.module_name,
+            ),
+            bpy_report.NotificationDrawConfig(
+                text_size=self.text_size,
+                end_x=self.end_x,
+                spacing=self.spacing,
+                first_y_location=self.first_y_location,
+                start_x=self.start_x,
+            ),
+            bpy_report.NotificationColorConfig(
+                info=self.info,
+                warning=self.warning,
+                error=self.error,
+                runtime_error=self.runtime_error,
+            ),
+        )
 
 
 class BRM_Properties(bpy.types.PropertyGroup):
@@ -43,6 +134,8 @@ class BRM_Properties(bpy.types.PropertyGroup):
 
     fix_message_index: bpy.props.IntProperty(default=0, name="Fix Message Index")  # type: ignore
 
+    config_playground: bpy.props.PointerProperty(type=BRM_ConfigPlayground)  # type: ignore
+
 
 class BRM_PT_BPYReportMessageTests(bpy.types.Panel):
     """Creates a Panel in the Object properties window"""
@@ -58,12 +151,14 @@ class BRM_PT_BPYReportMessageTests(bpy.types.Panel):
         layout.use_property_split = True
         layout.use_property_decorate = False
 
+        props = context.scene.brm_test
+
         row = layout.row()
-        row.prop(context.scene.brm_test, "message_text")
+        row.prop(props, "message_text")
         row = layout.row()
-        row.prop(context.scene.brm_test, "message_type")
+        row.prop(props, "message_type")
         row = layout.row()
-        row.prop(context.scene.brm_test, "fix_message_index")
+        row.prop(props, "fix_message_index")
 
         box = layout.box()
         box.operator("brm.test_operator", text="Report").action = "REPORT"
@@ -75,6 +170,9 @@ class BRM_PT_BPYReportMessageTests(bpy.types.Panel):
         row.operator("brm.test_operator", text="Unregister").action = (
             "UNREGISTER"
         )
+
+        box = layout.box()
+        props.config_playground.draw(box)
 
 
 class BRM_OT_TestOperator(bpy.types.Operator):
@@ -100,37 +198,37 @@ class BRM_OT_TestOperator(bpy.types.Operator):
 
         if self.action in ["FIX_MESSAGE", "REPORT"]:
 
-            display_time = 0 if self.action == "FIX_MESSAGE" else 5
+            remove_in_time = 0 if self.action == "FIX_MESSAGE" else 5
 
             match props.message_type:
                 case "INFO":
                     bpy_report.info(
                         props.message_text,
-                        display_time=display_time,
+                        remove_in_time=remove_in_time,
                         fix_message_index=props.fix_message_index,
                     )
                 case "WARNING":
                     bpy_report.warning(
                         props.message_text,
-                        display_time=display_time,
+                        remove_in_time=remove_in_time,
                         fix_message_index=props.fix_message_index,
                     )
                 case "ERROR":
                     bpy_report.error(
                         props.message_text,
-                        display_time=display_time,
+                        remove_in_time=remove_in_time,
                         fix_message_index=props.fix_message_index,
                     )
                 case "RUNTIME_ERROR":
                     bpy_report.runtime_error(
                         props.message_text,
-                        display_time=display_time,
+                        remove_in_time=remove_in_time,
                         fix_message_index=props.fix_message_index,
                     )
                 case _:
                     bpy_report.info(
                         props.message_text,
-                        display_time=display_time,
+                        remove_in_time=remove_in_time,
                         fix_message_index=props.fix_message_index,
                     )
 
@@ -143,6 +241,7 @@ class BRM_OT_TestOperator(bpy.types.Operator):
 def register():
     """Register the add-on"""
 
+    bpy.utils.register_class(BRM_ConfigPlayground)
     bpy.utils.register_class(BRM_Properties)
     bpy.types.Scene.brm_test = bpy.props.PointerProperty(type=BRM_Properties)
 
@@ -158,6 +257,7 @@ def unregister():
 
     bpy.utils.unregister_class(BRM_PT_BPYReportMessageTests)
     bpy.utils.unregister_class(BRM_OT_TestOperator)
+    bpy.utils.unregister_class(BRM_ConfigPlayground)
 
     # Unregister the message system
     bpy_report.unregister_messages()

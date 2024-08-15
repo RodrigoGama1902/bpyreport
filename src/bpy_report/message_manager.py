@@ -64,17 +64,18 @@ class NotificationType(Enum):
 class NotificationInfo:
     """Class to store the notification data"""
 
-    module_name = notification_config.basic.module_name
-    text_size = notification_config.draw.text_size
-
     def __init__(
         self,
         raw_text: str,
         notification_type: NotificationType,
+        module_name: str = "",
+        text_size: int = 40,
     ):
 
         self.raw_text = raw_text
         self.type = notification_type
+        self.module_name = module_name
+        self.text_size = text_size
 
     def get_text(self):
         """Return the final text to be displayed"""
@@ -116,19 +117,19 @@ class NotificationDraw:
 
     def __init__(
         self,
-        box_width: int,
+        box_width: float,
         color: tuple[float, float, float, float],
         text: str,
         text_size: float,
         y_location: int,
-        x_start_position: float,
+        start_x: float,
     ):
 
         self.dpi = bpy.context.preferences.system.dpi
 
         self.box_width = box_width
         self.y_location = y_location
-        self.x_start_position = x_start_position
+        self.start_x = start_x
 
         self.font_id = 0
         self.color = color
@@ -168,8 +169,8 @@ class NotificationDraw:
         """Draw a single notification box and return the value of the next y location"""
 
         vertices = (
-            (self.x_start_position, self.y_location),
-            (self.x_start_position, self.y_location + self.box_height_px),
+            (self.start_x, self.y_location),
+            (self.start_x, self.y_location + self.box_height_px),
             (self.box_width, self.y_location + self.box_height_px),
             (self.box_width, self.y_location),
         )
@@ -197,9 +198,7 @@ class NotificationDraw:
     def draw_notification_text(self):
         """Draw the notification text"""
 
-        blf.position(
-            self.font_id, self.x_start_position + 20, self.text_y_location, 0
-        )
+        blf.position(self.font_id, self.start_x + 20, self.text_y_location, 0)
         blf.color(self.font_id, 1.0, 1.0, 1.0, 1.0)
         blf.shadow(self.font_id, 5, 0.0, 0.0, 0.0, 1)
         blf.shadow_offset(self.font_id, 1, -1)
@@ -214,11 +213,9 @@ def _draw_all_notifications(self: Any, context: Context):
     """Draws all current notifications on the viewports"""
 
     y_current_location = notification_config.draw.first_y_location
-    x_start_position = (
-        bpy.context.area.width * notification_config.draw.x_start_position
-    )
+    start_x = bpy.context.area.width * notification_config.draw.start_x
     notification_width = (
-        bpy.context.area.width * notification_config.draw.width_percentage
+        bpy.context.area.width * notification_config.draw.end_x
     )
 
     for notification in notification_data.notifications:
@@ -229,7 +226,7 @@ def _draw_all_notifications(self: Any, context: Context):
             text=notification.get_text(),
             text_size=notification.text_size,
             y_location=y_current_location,
-            x_start_position=x_start_position,
+            start_x=start_x,
         )
 
         y_current_location += notification_draw.draw_notification_box()
@@ -243,7 +240,7 @@ def _draw_all_notifications(self: Any, context: Context):
             text=fix_notification.get_text(),
             text_size=fix_notification.text_size,
             y_location=y_current_location,
-            x_start_position=x_start_position,
+            start_x=start_x,
         )
 
         y_current_location += fix_message_draw.draw_notification_box()
@@ -290,7 +287,12 @@ def update_fix_message(
 
     _create_drawn_handler()
 
-    notification = NotificationInfo(current_text, current_type)
+    notification = NotificationInfo(
+        current_text,
+        current_type,
+        module_name=notification_config.basic.module_name,
+        text_size=notification_config.draw.text_size,
+    )
     notification_data.fix_messages[index] = notification
 
     DrawHelper.redraw()
@@ -331,17 +333,30 @@ def unregister_messages():
 def message(
     text: str,
     notification_type: NotificationType = NotificationType.INFO,
-    display_time: int = 5,
+    remove_in_time: int = 5,
     print_console: bool = True,
     fix_message_index: int = 0,
 ):
-    """Add a message notification to the list"""
+    """Add a message notification to the list
+
+    Args:
+        text (str): The text of the notification
+        notification_type (NotificationType, optional): The type of the notification. Defaults to NotificationType.INFO.
+        remove_in_time (int, optional): The time in seconds that the notification will be removed. If 0, the message will be a fix message. Defaults to 5.
+        print_console (bool, optional): If the message will be printed on the console. Defaults to True.
+        fix_message_index (int, optional): The index of the fix message. Defaults to 0. Used only if remove_in_time is 0.
+    """
 
     _create_drawn_handler()
 
-    notification = NotificationInfo(text, notification_type)
+    notification = NotificationInfo(
+        text,
+        notification_type,
+        module_name=notification_config.basic.module_name,
+        text_size=notification_config.draw.text_size,
+    )
 
-    if display_time <= 0:  # FIX MESSAGE
+    if remove_in_time <= 0:  # FIX MESSAGE
         notification_data.fix_messages[fix_message_index] = notification
         DrawHelper.redraw()
         return
@@ -350,7 +365,7 @@ def message(
     print(notification_config.basic.module_name)
 
     bpy.app.timers.register(
-        _timer_remove_text, first_interval=display_time, persistent=True
+        _timer_remove_text, first_interval=remove_in_time, persistent=True
     )
     DrawHelper.redraw()
 
@@ -360,16 +375,23 @@ def message(
 
 def info(
     text: str,
-    display_time: int = 5,
+    remove_in_time: int = 5,
     print_console: bool = True,
     fix_message_index: int = 0,
 ):
-    """Info wrapper for the message function"""
+    """Info wrapper for the message function
+
+    Args:
+        text (str): The text of the notification
+        remove_in_time (int, optional): The time in seconds that the notification will be removed. Defaults to 5.
+        print_console (bool, optional): If the message will be printed on the console. Defaults to True.
+        fix_message_index (int, optional): The index of the fix message. Defaults to 0. Used only if remove_in_time is 0.
+    """
 
     message(
         text=text,
         notification_type=NotificationType.INFO,
-        display_time=display_time,
+        remove_in_time=remove_in_time,
         print_console=print_console,
         fix_message_index=fix_message_index,
     )
@@ -377,16 +399,23 @@ def info(
 
 def warning(
     text: str,
-    display_time: int = 5,
+    remove_in_time: int = 5,
     print_console: bool = True,
     fix_message_index: int = 0,
 ):
-    """Warning wrapper for the message function"""
+    """Warning wrapper for the message function
+
+    Args:
+        text (str): The text of the notification
+        remove_in_time (int, optional): The time in seconds that the notification will be removed. Defaults to 5.
+        print_console (bool, optional): If the message will be printed on the console. Defaults to True.
+        fix_message_index (int, optional): The index of the fix message. Defaults to 0. Used only if remove_in_time is 0.
+    """
 
     message(
         text=text,
         notification_type=NotificationType.WARNING,
-        display_time=display_time,
+        remove_in_time=remove_in_time,
         print_console=print_console,
         fix_message_index=fix_message_index,
     )
@@ -394,16 +423,23 @@ def warning(
 
 def error(
     text: str,
-    display_time: int = 5,
+    remove_in_time: int = 5,
     print_console: bool = True,
     fix_message_index: int = 0,
 ):
-    """Error wrapper for the message function"""
+    """Error wrapper for the message function
+
+    Args:
+        text (str): The text of the notification
+        remove_in_time (int, optional): The time in seconds that the notification will be removed. Defaults to 5.
+        print_console (bool, optional): If the message will be printed on the console. Defaults to True.
+        fix_message_index (int, optional): The index of the fix message. Defaults to 0. Used only if remove_in_time is 0.
+    """
 
     message(
         text=text,
         notification_type=NotificationType.ERROR,
-        display_time=display_time,
+        remove_in_time=remove_in_time,
         print_console=print_console,
         fix_message_index=fix_message_index,
     )
@@ -411,16 +447,23 @@ def error(
 
 def runtime_error(
     text: str,
-    display_time: int = 5,
+    remove_in_time: int = 5,
     print_console: bool = True,
     fix_message_index: int = 0,
 ):
-    """Runtime Error wrapper for the message function"""
+    """Runtime Error wrapper for the message function
+
+    Args:
+        text (str): The text of the notification
+        remove_in_time (int, optional): The time in seconds that the notification will be removed. Defaults to 5.
+        print_console (bool, optional): If the message will be printed on the console. Defaults to True.
+        fix_message_index (int, optional): The index of the fix message. Defaults to 0. Used only if remove_in_time is 0.
+    """
 
     message(
         text=text,
         notification_type=NotificationType.RUNTIME_ERROR,
-        display_time=display_time,
+        remove_in_time=remove_in_time,
         print_console=print_console,
         fix_message_index=fix_message_index,
     )
