@@ -65,7 +65,7 @@ bpyreport.set_notification_config(
 ```
 
 ## Testing
-You can dynamically test all functionalities of the BpyReport submodule using the bpyreport-addon. This add-on provides all possible configurations in a simple and easily testable format. Check it out [here](https://github.com/RodrigoGama1902/bpyreport-addon)
+You can dynamically test all functionalities of the BpyReport submodule using the [bpyreport-addon]((https://github.com/RodrigoGama1902/bpyreport-addon)). This add-on provides all possible configurations in a simple and easily testable format. just install the add-on and start testing before integrating it into your project.
 
 ![BpyReport Add-on](docs/img/addon.gif)
 
