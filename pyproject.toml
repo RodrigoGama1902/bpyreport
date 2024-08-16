@@ -1,3 +1,6 @@
+[tool.bpyreport]
+version = "0.2.0"
+
 [tool.pyright]
 
 reportMissingImports = true
@@ -8,7 +11,6 @@ reportOptionalSubscript = true
 reportUnknownVariableType = false
 reportUnknownMemberType = false
 reportUnknownArgumentType = false
-
 reportAttributeAccessIssue = false
 
 pythonVersion = "3.11"
