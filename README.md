@@ -23,11 +23,17 @@ from .libs import bpyreport
 
 bpyreport.info("My info report message")
 bpyreport.warning("My warning report message")
-bpyreport.error("My error report message")
+bpyreport.error("My error report message", remove_in_time=5)
 ```
 Result:
 
-![BpyReport Add-on](docs/img/report_example.png)
+![Report Example](docs/img/report_example.png)
+
+## Temporary and Fixed Messages
+BpyReport allows you to generate two types of messages:
+
+- Temporary Messages: These messages stay on the screen for a limited time before disappearing automatically.
+- Fixed Messages: These messages remain on the screen until they are manually dismissed or replaced by another message.
 
 ## Testing
 You can dynamically test all functionalities of the BpyReport submodule using the bpyreport-addon. This add-on provides all possible configurations in a simple and easily testable format.
