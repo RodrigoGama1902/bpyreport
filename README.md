@@ -36,6 +36,7 @@ BpyReport allows you to generate two types of messages:
 - Fixed Messages: These messages remain on the screen until they are manually dismissed or replaced by another message.
 
 ## Testing
-You can dynamically test all functionalities of the BpyReport submodule using the bpyreport-addon. This add-on provides all possible configurations in a simple and easily testable format.
+You can dynamically test all functionalities of the BpyReport submodule using the bpyreport-addon. This add-on provides all possible configurations in a simple and easily testable format. Check it out [here](https://github.com/RodrigoGama1902/bpyreport-addon)
 
 ![BpyReport Add-on](docs/img/addon.gif)
+
